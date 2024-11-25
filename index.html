@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vue PIN Input Debug</title>
+  <title>Vue PIN Input Test</title>
   <script src="https://unpkg.com/vue@3"></script>
   <style>
     .pin-container {
@@ -24,11 +24,22 @@
       text-align: center;
       font-size: 1.2rem;
     }
+    .bounce {
+      animation: pulse 0.3s ease-in-out alternate;
+    }
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      100% {
+        transform: scale(1.1);
+      }
+    }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="pin-container">
+    <form ref="PINContainer" class="pin-container">
       <input
         v-for="(digit, index) in digits"
         :key="index"
@@ -36,11 +47,12 @@
         class="pin-input"
         maxlength="1"
         v-model="digits[index]"
-        @input="updatePinResponse"
+        :class="{ bounce: digits[index] !== null }"
+        @keydown="handleKeyDown($event, index)"
       />
-    </div>
+    </form>
     <div class="output">
-      <strong>Entered Pin:</strong> <span>{{ computedPin }}</span>
+      <strong>Entered PIN:</strong> {{ digits.join('') }}
     </div>
     <div class="output">
       <strong>PIN Response:</strong>
@@ -49,40 +61,84 @@
   </div>
 
   <script>
-    const { createApp, reactive, ref, computed } = Vue;
+    const { createApp, reactive, ref, nextTick } = Vue;
 
     createApp({
       setup() {
-        // Reactive array to hold the pin digits
-        const digits = reactive([null, null, null]);
+        const PINContainer = ref(null);
+        const OTPSubmit = ref(null);
 
-        // PIN Response object
+        const digits = reactive([null, null, null]);
         const PINResponse = reactive({
           Digit1: { Position: 1, Value: null },
           Digit2: { Position: 2, Value: null },
           Digit3: { Position: 3, Value: null },
         });
 
-        // Computed property to combine digits into a single string
-        const computedPin = computed(() => digits.join(''));
+        function isDigitsFull() {
+          return digits.every(elem => elem !== null && elem !== undefined);
+        }
 
-        // Update PINResponse when digits change
-        const updatePinResponse = () => {
-          PINResponse.Digit1.Value = digits[0] || null;
-          PINResponse.Digit2.Value = digits[1] || null;
-          PINResponse.Digit3.Value = digits[2] || null;
+        async function handleKeyDown(event, index) {
+          // Only allow tab, arrows
+          if (event.key !== "Tab" && event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+            event.preventDefault();
+          }
 
-          console.log("Updated PINResponse:", JSON.stringify(PINResponse, null, 2));
-        };
+          // Handle Tab key navigation
+          if (event.key === "Tab") {
+            if (event.shiftKey && index > 0) {
+              PINContainer.value.children[index - 1].focus();
+            } else if (!event.shiftKey && index < digits.length - 1) {
+              PINContainer.value.children[index + 1].focus();
+            }
+            return;
+          }
+
+          // Move back a digit using backspace
+          if (event.key === "Backspace") {
+            digits[index] = null;
+            if (index > 0) {
+              PINContainer.value.children[index - 1].focus();
+            }
+            return;
+          }
+
+          // Only action digits
+          if (/^[0-9]$/.test(event.key)) {
+            digits[index] = event.key; // Add entered value to array
+
+            await nextTick();
+
+            // Move to next input
+            if (index < digits.length - 1) {
+              PINContainer.value.children[index + 1].focus();
+            }
+
+            // Update PINResponse and focus OTPSubmit if all digits are filled
+            if (isDigitsFull()) {
+              PINResponse.Digit1.Value = digits[0];
+              PINResponse.Digit2.Value = digits[1];
+              PINResponse.Digit3.Value = digits[2];
+              console.log("All digits entered, PINResponse:", PINResponse);
+
+              // Simulate focus on OTPSubmit (replace with button ref in actual implementation)
+              if (OTPSubmit.value) {
+                OTPSubmit.value.focus();
+              }
+            }
+          }
+        }
 
         return {
+          PINContainer,
+          OTPSubmit,
           digits,
           PINResponse,
-          computedPin,
-          updatePinResponse,
+          handleKeyDown,
         };
       },
-    }).mount('#app');
+    }).mount("#app");
   </script>
 </body>
 </html>
