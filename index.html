@@ -94,7 +94,7 @@
     </div>
 
     <script>
-      const { createApp, reactive, ref, nextTick } = Vue;
+      const { createApp, reactive, ref, nextTick, watch } = Vue;
 
       const beforeInstance = {
         setup() {
@@ -208,14 +208,19 @@
             digits[index] = event.target.value || null;
 
             // Update corresponding PINResponse entry
-            if (index === 0) PINResponse.Digit1.Value = digits[0];
-            if (index === 1) PINResponse.Digit2.Value = digits[1];
-            if (index === 2) PINResponse.Digit3.Value = digits[2];
+            // if (index === 0) PINResponse.Digit1.Value = digits[0];
+            // if (index === 1) PINResponse.Digit2.Value = digits[1];
+            // if (index === 2) PINResponse.Digit3.Value = digits[2];
 
             // Automatically focus the next input if a digit is entered
             if (digits[index] && index < digits.length - 1) {
               nextTick(() => {
-                PINContainer.value.children[index + 1].focus();
+                console.log("focus", index);
+                //PINContainer.value.children[index + 2].focus();
+                if (index != 3 - 1) {
+                  PINContainer.value.children[index + 1].focus();
+                  //focusedIndex.value = index; // Track which input is focused
+                }
               });
             }
 
@@ -294,6 +299,24 @@
             //   }
             // }
           }
+
+          // Watcher for digits array
+          watch(
+            () => [...digits], // Use copy to ensure reactivity
+            () => {
+              PINResponse.Digit1.Value = digits[0];
+              PINResponse.Digit2.Value = digits[1];
+              PINResponse.Digit3.Value = digits[2];
+              console.log("All digits entered, PINResponse:", PINResponse);
+              if (isDigitsFull()) {
+                // Simulate focus on OTPSubmit
+                if (OTPSubmit.value) {
+                  OTPSubmit.value.focus();
+                }
+              }
+            },
+            { deep: true } // Ensures nested properties of the reactive array are observed
+          );
 
           return {
             PINContainer,
