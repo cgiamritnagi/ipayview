@@ -79,7 +79,6 @@
           autocomplete="off"
           inputmode="numeric"
           maxlength="1"
-          v-model="digits[index]"
           :value="digits[index]"
           @input="e=> digits[index] = e.target.value"
           @keydown="handleKeyDown($event, index)"
