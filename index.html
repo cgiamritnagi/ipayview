@@ -79,8 +79,8 @@
           autocomplete="off"
           inputmode="numeric"
           maxlength="1"
-          :value="digits[index]"
-          @input="e=> digits[index] = e.target.value"
+          v-model="digits[index]"
+          @input="updateDigit($event, index)"
           @keydown="handleKeyDown($event, index)"
         />
       </form>
@@ -193,8 +193,33 @@
             return digits.every((elem) => elem !== null && elem !== undefined);
           }
 
-          function updateDigit(index) {
-            digits[index] = PINContainer.value.children[index].value || null;
+          function updateDigit(event, index) {
+            // Update digit
+            digits[index] = event.target.value || null;
+
+            // Update corresponding PINResponse entry
+            if (index === 0) PINResponse.Digit1.Value = digits[0];
+            if (index === 1) PINResponse.Digit2.Value = digits[1];
+            if (index === 2) PINResponse.Digit3.Value = digits[2];
+
+            console.log("Updated PINResponse:", PINResponse);
+
+            // Automatically focus the next input if a digit is entered
+            if (digits[index] && index < digits.length - 1) {
+              nextTick(() => {
+                PINContainer.value.children[index + 1].focus();
+              });
+            }
+
+            // Check if all digits are entered
+            if (
+              digits.every((digit) => digit !== null && digit !== undefined)
+            ) {
+              console.log("All digits entered, PINResponse:", PINResponse);
+              if (OTPSubmit.value) {
+                OTPSubmit.value.focus(); // Focus on the submit button
+              }
+            }
           }
 
           async function handleKeyDown(event, index) {
@@ -227,30 +252,30 @@
             }
 
             // Only action digits
-            if (/^[0-9]$/.test(event.key)) {
-              event.preventDefault();
-              digits[index] = event.key; // Add entered value to array
+            // if (/^[0-9]$/.test(event.key)) {
+            //   event.preventDefault();
+            //   digits[index] = event.key; // Add entered value to array
 
-              await nextTick();
+            //   await nextTick();
 
-              // Move to next input
-              if (index < digits.length - 1) {
-                PINContainer.value.children[index + 1].focus();
-              }
+            //   // Move to next input
+            //   if (index < digits.length - 1) {
+            //     PINContainer.value.children[index + 1].focus();
+            //   }
 
-              // Update PINResponse and focus OTPSubmit if all digits are filled
-              if (isDigitsFull()) {
-                PINResponse.Digit1.Value = digits[0];
-                PINResponse.Digit2.Value = digits[1];
-                PINResponse.Digit3.Value = digits[2];
-                console.log("All digits entered, PINResponse:", PINResponse);
+            //   // Update PINResponse and focus OTPSubmit if all digits are filled
+            //   if (isDigitsFull()) {
+            //     PINResponse.Digit1.Value = digits[0];
+            //     PINResponse.Digit2.Value = digits[1];
+            //     PINResponse.Digit3.Value = digits[2];
+            //     console.log("All digits entered, PINResponse:", PINResponse);
 
-                // Simulate focus on OTPSubmit (replace with button ref in actual implementation)
-                if (OTPSubmit.value) {
-                  OTPSubmit.value.focus();
-                }
-              }
-            }
+            //     // Simulate focus on OTPSubmit (replace with button ref in actual implementation)
+            //     if (OTPSubmit.value) {
+            //       OTPSubmit.value.focus();
+            //     }
+            //   }
+            // }
           }
 
           return {
