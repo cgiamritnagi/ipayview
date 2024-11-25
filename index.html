@@ -117,7 +117,17 @@
             if (
               event.key !== "Tab" &&
               event.key !== "ArrowLeft" &&
-              event.key !== "ArrowRight"
+              event.key !== "ArrowRight" &&
+              event.key !== "0" &&
+              event.key !== "1" &&
+              event.key !== "2" &&
+              event.key !== "3" &&
+              event.key !== "4" &&
+              event.key !== "5" &&
+              event.key !== "6" &&
+              event.key !== "7" &&
+              event.key !== "8" &&
+              event.key !== "9"
             ) {
               event.preventDefault();
             }
@@ -201,8 +211,6 @@
             if (index === 0) PINResponse.Digit1.Value = digits[0];
             if (index === 1) PINResponse.Digit2.Value = digits[1];
             if (index === 2) PINResponse.Digit3.Value = digits[2];
-
-            alert("Updated PINResponse:", PINResponse);
 
             // Automatically focus the next input if a digit is entered
             if (digits[index] && index < digits.length - 1) {
