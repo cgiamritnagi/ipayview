@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vue PIN Input Debug</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    .pin-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .pin-input {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    .output {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="pin-container">
+      <input
+        v-for="(digit, index) in digits"
+        :key="index"
+        type="text"
+        class="pin-input"
+        maxlength="1"
+        v-model="digits[index]"
+        @input="updatePinResponse"
+      />
+    </div>
+    <div class="output">
+      <strong>Entered Pin:</strong> <span>{{ computedPin }}</span>
+    </div>
+    <div class="output">
+      <strong>PIN Response:</strong>
+      <pre>{{ PINResponse }}</pre>
+    </div>
+  </div>
+
+  <script>
+    const { createApp, reactive, ref, computed } = Vue;
+
+    createApp({
+      setup() {
+        // Reactive array to hold the pin digits
+        const digits = reactive([null, null, null]);
+
+        // PIN Response object
+        const PINResponse = reactive({
+          Digit1: { Position: 1, Value: null },
+          Digit2: { Position: 2, Value: null },
+          Digit3: { Position: 3, Value: null },
+        });
+
+        // Computed property to combine digits into a single string
+        const computedPin = computed(() => digits.join(''));
+
+        // Update PINResponse when digits change
+        const updatePinResponse = () => {
+          PINResponse.Digit1.Value = digits[0] || null;
+          PINResponse.Digit2.Value = digits[1] || null;
+          PINResponse.Digit3.Value = digits[2] || null;
+
+          console.log("Updated PINResponse:", JSON.stringify(PINResponse, null, 2));
+        };
+
+        return {
+          digits,
+          PINResponse,
+          computedPin,
+          updatePinResponse,
+        };
+      },
+    }).mount('#app');
+  </script>
+</body>
+</html>
