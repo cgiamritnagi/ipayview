@@ -1,93 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Barebones OTP Component</title>
-  <script src="https://unpkg.com/vue@3"></script>
-  <style>
-    .otp-container {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin: 20px 0;
-    }
-    .otp-input {
-      width: 40px;
-      height: 40px;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-  </style>
-</head>
-<body>
-  <div id="app">
-    <div ref="otpCont" class="otp-container">
-      <input
-        type="text"
-        class="otp-input"
-        v-for="(el, ind) in digits"
-        :key="ind"
-        v-model="digits[ind]"
-        maxlength="1"
-        inputmode="numeric"
-        @keydown="handleKeyDown($event, ind)"
-        @paste="handlePaste($event, ind)"
-      />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Barebones OTP Component</title>
+    <script src="https://unpkg.com/vue@3"></script>
+    <style>
+      .otp-container {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 20px 0;
+      }
+      .otp-input {
+        width: 40px;
+        height: 40px;
+        text-align: center;
+        font-size: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div ref="otpCont" class="otp-container">
+        <input
+          type="text"
+          class="otp-input"
+          v-for="(el, ind) in digits"
+          :key="ind"
+          v-model="digits[ind]"
+          maxlength="1"
+          inputmode="numeric"
+          @input="updateDigit($event, ind)"
+          @keydown="handleKeyDown($event, ind)"
+          @focus="selectText($event)"
+          @paste="handlePaste($event, ind)"
+        />
+      </div>
+      <div>
+        <strong>Entered OTP:</strong> {{ digits.join('') }} <br /><br />
+        <span>125674</span>
+      </div>
     </div>
-    <div>
-      <strong>Entered OTP:</strong> {{ digits.join('') }}
-      <br><br>
-      <span>125674</span>
-    </div>
-  </div>
 
-  <script>
-    const { createApp, reactive, ref, onMounted, nextTick } = Vue;
+    <script>
+      const { createApp, reactive, ref, onMounted, watch, nextTick } = Vue;
 
-    createApp({
-      setup() {
-        const otpCont = ref(null);
-        const digits = reactive([null, null, null, null, null, null]); 
-        const isDigitsFull = () => digits.every((digit) => digit !== null && digit !== undefined);
+      createApp({
+        setup() {
+          const otpCont = ref(null);
+          const digits = reactive([null, null, null, null, null, null]);
+          const isDigitsFull = () =>
+            digits.every((digit) => digit !== null && digit !== undefined);
 
-        const handleKeyDown = (event, index) => {
-          if (event.key === "Backspace") {
-            digits[index] = null;
-            if (index > 0) {
-              otpCont.value.children[index - 1].focus();
+          const handleKeyDown = (event, index) => {
+            if (event.key === "Backspace") {
+              digits[index] = null;
+              if (index > 0) {
+                otpCont.value.children[index - 1].focus();
+              }
             }
-          } else if (/^[0-9]$/.test(event.key)) {
-            digits[index] = event.key;
-            if (index < digits.length - 1) {
+            // else if (/^[0-9]$/.test(event.key)) {
+            //   digits[index] = event.key;
+            //   if (index < digits.length - 1) {
+            //     nextTick(() => otpCont.value.children[index + 1].focus());
+            //   }
+            // }
+          };
+
+          const handlePaste = (event, index) => {
+            if (index === 0) {
+              const pasteData = event.clipboardData.getData("text");
+              for (let i = 0; i < pasteData.length; i++) {
+                if (i < digits.length) {
+                  digits[i] = pasteData.charAt(i);
+                }
+              }
+            }
+          };
+
+          function updateDigit(event, index) {
+            // Update digit (0-9 only)
+            if (new RegExp("^([0-9])$").test(event.target.value)) {
+              digits[index] = event.target.value || null;
+            }
+
+            // Automatically focus the next input if a digit is entered
+            if (digits[index] && index < digits.length - 1) {
               nextTick(() => otpCont.value.children[index + 1].focus());
             }
           }
-        };
 
-        const handlePaste = (event, index) => {
-          if (index === 0) {
-            const pasteData = event.clipboardData.getData("text");
-            for (let i = 0; i < pasteData.length; i++) {
-              if (i < digits.length) {
-                digits[i] = pasteData.charAt(i);
-              }
-            }
+          function selectText(event) {
+            event.target.select(); // Automatically selects the text inside the input
           }
-        };
 
-        onMounted(() => {
-          nextTick(() => otpCont.value.children[0].focus());
-        });
+          onMounted(() => {
+            nextTick(() => otpCont.value.children[0].focus());
+          });
 
-        return {
-          otpCont,
-          digits,
-          handleKeyDown,
-          handlePaste,
-        };
-      },
-    }).mount("#app");
-  </script>
-</body>
+          watch(
+            () => [...digits], // Spread to ensure reactivity
+            () => {
+              // Focus on OTPSubmit button when all digits are entered
+              if (isDigitsFull()) {
+                OTPSubmit.value.focus();
+              }
+            },
+            { deep: true } // Ensures nested properties of the reactive array are observed
+          );
+
+          return {
+            otpCont,
+            digits,
+            handleKeyDown,
+            handlePaste,
+            updateDigit,
+            selectText,
+          };
+        },
+      }).mount("#app");
+    </script>
+  </body>
 </html>
