@@ -30,12 +30,15 @@
         :key="ind"
         v-model="digits[ind]"
         maxlength="1"
+        inputmode="numeric"
         @keydown="handleKeyDown($event, ind)"
         @paste="handlePaste($event, ind)"
       />
     </div>
     <div>
       <strong>Entered OTP:</strong> {{ digits.join('') }}
+      <br><br>
+      <span>125674</span>
     </div>
   </div>
 
