@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barebones OTP Component</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <style>
+    .otp-container {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .otp-input {
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div ref="otpCont" class="otp-container">
+      <input
+        type="text"
+        class="otp-input"
+        v-for="(el, ind) in digits"
+        :key="ind"
+        v-model="digits[ind]"
+        maxlength="1"
+        @keydown="handleKeyDown($event, ind)"
+        @paste="handlePaste($event, ind)"
+      />
+    </div>
+    <div>
+      <strong>Entered OTP:</strong> {{ digits.join('') }}
+    </div>
+  </div>
+
+  <script>
+    const { createApp, reactive, ref, onMounted, nextTick } = Vue;
+
+    createApp({
+      setup() {
+        const otpCont = ref(null);
+        const digits = reactive([null, null, null, null, null, null]); 
+        const isDigitsFull = () => digits.every((digit) => digit !== null && digit !== undefined);
+
+        const handleKeyDown = (event, index) => {
+          if (event.key === "Backspace") {
+            digits[index] = null;
+            if (index > 0) {
+              otpCont.value.children[index - 1].focus();
+            }
+          } else if (/^[0-9]$/.test(event.key)) {
+            digits[index] = event.key;
+            if (index < digits.length - 1) {
+              nextTick(() => otpCont.value.children[index + 1].focus());
+            }
+          }
+        };
+
+        const handlePaste = (event, index) => {
+          if (index === 0) {
+            const pasteData = event.clipboardData.getData("text");
+            for (let i = 0; i < pasteData.length; i++) {
+              if (i < digits.length) {
+                digits[i] = pasteData.charAt(i);
+              }
+            }
+          }
+        };
+
+        onMounted(() => {
+          nextTick(() => otpCont.value.children[0].focus());
+        });
+
+        return {
+          otpCont,
+          digits,
+          handleKeyDown,
+          handlePaste,
+        };
+      },
+    }).mount("#app");
+  </script>
+</body>
+</html>
